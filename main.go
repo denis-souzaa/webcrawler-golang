@@ -25,13 +25,9 @@ func main() {
 }
 
 func visitLink(link string) {
-	if ok := visited[link]; ok {
-		return
-	}
 
-	visited[link] = true
+	fmt.Printf("visitando: %s\n", link)
 
-	fmt.Println(link)
 	resp, err := http.Get(link)
 	if err != nil {
 		panic(err)
@@ -59,6 +55,11 @@ func extractLinks(node *html.Node) {
 
 			link, err := url.Parse(attr.Val)
 			if err != nil || link.Scheme == "" {
+				continue
+			}
+
+			if db.VisitedLink(link.String()) {
+				fmt.Printf("link já visitado %s\n", link)
 				continue
 			}
 
