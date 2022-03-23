@@ -2,6 +2,7 @@ package main
 
 import (
 	"denis-souzaa/web-crawler/db"
+	"denis-souzaa/web-crawler/website"
 	"flag"
 	"fmt"
 	"net/http"
@@ -11,7 +12,10 @@ import (
 	"golang.org/x/net/html"
 )
 
-var link string
+var (
+	link   string
+	action string
+)
 
 type VisitedLink struct {
 	Website     string    `bson:"website"`
@@ -21,15 +25,23 @@ type VisitedLink struct {
 
 func init() {
 	flag.StringVar(&link, "url", "https://aprendagolang.com.br", "ponto de partida das visitas")
+	flag.StringVar(&action, "action", "website", "qual serviço iniciar")
 }
 
 func main() {
 	flag.Parse()
 
-	done := make(chan bool)
-	go visitLink(link)
+	switch action {
+	case "website":
+		website.Run()
+	case "webcrawler":
+		done := make(chan bool)
+		go visitLink(link)
 
-	<-done
+		<-done
+	default:
+		fmt.Printf("action %s não reconhecida", action)
+	}
 }
 
 func visitLink(link string) {
