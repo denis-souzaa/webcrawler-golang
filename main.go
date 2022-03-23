@@ -2,6 +2,7 @@ package main
 
 import (
 	"denis-souzaa/web-crawler/db"
+	"flag"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -10,9 +11,7 @@ import (
 	"golang.org/x/net/html"
 )
 
-var (
-	visited map[string]bool = map[string]bool{}
-)
+var link string
 
 type VisitedLink struct {
 	Website     string    `bson:"website"`
@@ -20,8 +19,17 @@ type VisitedLink struct {
 	VisitedDate time.Time `bson:"visited_date"`
 }
 
+func init() {
+	flag.StringVar(&link, "url", "https://aprendagolang.com.br", "ponto de partida das visitas")
+}
+
 func main() {
-	visitLink("https://aprendagolang.com.br")
+	flag.Parse()
+
+	done := make(chan bool)
+	go visitLink(link)
+
+	<-done
 }
 
 func visitLink(link string) {
@@ -35,7 +43,7 @@ func visitLink(link string) {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		panic(fmt.Sprintf("status diferente de 200: %d", resp.StatusCode))
+		fmt.Printf("[error] status diferente de 200: %d\n", resp.StatusCode)
 	}
 
 	node, err := html.Parse(resp.Body)
@@ -54,7 +62,7 @@ func extractLinks(node *html.Node) {
 			}
 
 			link, err := url.Parse(attr.Val)
-			if err != nil || link.Scheme == "" {
+			if err != nil || link.Scheme == "" || link.Scheme == "mailto" {
 				continue
 			}
 
@@ -70,7 +78,7 @@ func extractLinks(node *html.Node) {
 			}
 
 			db.Insert("links", visitedLink)
-			visitLink(link.String())
+			go visitLink(link.String())
 		}
 	}
 
