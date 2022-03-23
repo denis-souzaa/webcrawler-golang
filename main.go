@@ -17,12 +17,6 @@ var (
 	action string
 )
 
-type VisitedLink struct {
-	Website     string    `bson:"website"`
-	Link        string    `bson:"link"`
-	VisitedDate time.Time `bson:"visited_date"`
-}
-
 func init() {
 	flag.StringVar(&link, "url", "https://aprendagolang.com.br", "ponto de partida das visitas")
 	flag.StringVar(&action, "action", "website", "qual serviço iniciar")
@@ -78,12 +72,12 @@ func extractLinks(node *html.Node) {
 				continue
 			}
 
-			if db.VisitedLink(link.String()) {
+			if db.CheckVisitedLink(link.String()) {
 				fmt.Printf("link já visitado %s\n", link)
 				continue
 			}
 
-			visitedLink := VisitedLink{
+			visitedLink := db.VisitedLink{
 				Website:     link.Host,
 				Link:        link.String(),
 				VisitedDate: time.Now(),

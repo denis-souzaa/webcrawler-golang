@@ -7,18 +7,19 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-func CheckVisitedLink(link string) bool {
+func FindAllLinks() (entities []VisitedLink, err error) {
 	client, ctx := getConnection()
 	defer client.Disconnect(ctx)
 
 	c := client.Database("crawler").Collection("links")
 
-	opts := options.Count().SetLimit(1)
-
-	n, err := c.CountDocuments(context.TODO(), bson.D{{"link", link}}, opts)
+	opts := options.Find().SetSort(bson.D{{"visited_date", -1}})
+	cursor, err := c.Find(context.TODO(), bson.D{}, opts)
 	if err != nil {
-		panic(err)
+		return
 	}
 
-	return n > 0
+	err = cursor.All(context.TODO(), &entities)
+
+	return
 }
